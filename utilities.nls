@@ -1,0 +1,104 @@
+;=======================
+; Convenience functions
+;=======================
+
+;Sort a list of lists, on an element of a sublist
+to-report sort-with [ key lst ]
+  report sort-by [ [a b] -> (runresult key a) < (runresult key b) ] lst
+end
+
+
+; Warnings can not be supressed, and are presented in the output window.
+; Useful for things the use must know, such as conditions that should never occur, etc.
+to warning [string]
+  output-print "=================================="
+  output-print word "Warning ! " string
+  output-print "=================================="
+end
+
+; When running in verbose mode, output is generated in the output window, for nonesential information for the user
+; Useful for tracking what the model is doing, can be turned on/off
+to say [string]
+  if verbose? [
+    output-print string
+  ]
+end
+
+;debug is presented in the command output and is used for debug information, prints to the console
+;Messages that are only useful when fixing bugs
+to debug [string]
+  if debug? [
+    print string
+  ]
+end
+to loadData
+  set mangrovelist []
+  file-close-all ; close all open files
+  if not file-exists? "data/coordinates.csv" [
+    error "No 'data/coordinates.csv' file found!"
+  ]
+  let fileHeader 1;
+  file-open "data/coordinates.csv"
+  let row 0 ; the row that is currently read
+  ; We'll read all the data in a single loop
+  ;print "Start at"
+  while [ not file-at-end? ] [
+    ; here the CSV extension grabs a single line and puts the read data in a list
+    let data (csv:from-row  file-read-line)
+    if fileHeader <= row [
+     let location_string item 0 data
+     let xcoordinate item 1 data
+     let ycoordinate item 2 data 
+     let category_string item 3 data
+      
+
+      let patchToMake patch  xcoordinate ycoordinate 
+      ifelse patchToMake != nobody [
+        ask patchToMake [ 
+          ;ask patches [set pcolor pcolorPatch]
+          ;print pcolorPatch 
+          set pcolor pcolorPatch
+          set plocation location_string 
+          set mangrovelist lput plocation mangrovelist
+          set pcategory category_string
+          set plabel pcategory 
+          set plabel-color black
+          if pcategory = "Mangrove" [
+           set mangrove_x xcoordinate
+           set mangrove_y ycoordinate
+          ]
+          if pcategory = "Backwater" [
+           set backwater_x xcoordinate
+           set backwater_y ycoordinate
+          ]
+          if pcategory = "NGO" [
+           set ngo_x xcoordinate
+           set ngo_y ycoordinate
+          ]
+          if pcategory = "Job" [
+            set job_x xcoordinate
+            set job_y ycoordinate
+          ]
+          if pcategory ="KSEB" [
+            set kseb_x xcoordinate
+            set kseb_y ycoordinate
+          ]
+        ]
+      ]
+      [warning sentence location_string "has incorrect coordinates"]
+    ];end past header
+    
+    set row row + 1 ; increment the row counter for the header skip
+    
+]; end of while there are rows
+  
+  file-close ; make sure to close the file
+end
+
+to setupMap  
+  import-pcolors "data/kochi1.png" ; we map the image 1:1 on the world Image is 815x785 pixelsm, that is exactly the size of the world.
+  
+end
+
+
+
